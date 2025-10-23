@@ -1,12 +1,13 @@
-// app/shop/page.jsx
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ShopClient from "./ShopClient";
 
-// Server-side fetch function
 async function getProducts() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/products`, {
-    cache: "no-store", // Prevents caching if your DB updates often
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL || "https://your-deployed-site.vercel.app";
+
+  const res = await fetch(`${baseUrl}/api/products`, {
+    cache: "no-store",
   });
 
   if (!res.ok) {

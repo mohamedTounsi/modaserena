@@ -45,17 +45,17 @@ const Header = () => {
 
   return (
     <>
-      <div className="flex justify-between items-center py-4 px-8 lg:px-16 border-b border-gray-200">
+      <div className="flex w-[80%] mx-auto justify-between items-center py-4 px-8 lg:px-16 border-b border-gray-200">
         <Menu
           className="cursor-pointer md:hidden"
           onClick={() => setIsOpen(true)}
         />
         <Link href="/" prefetch>
           <Image
-            src="/beygif.webp"
+            src="/mirologo3.png"
             alt="Logo"
-            width={125}
-            height={125}
+            width={90}
+            height={90}
             priority
           />
         </Link>
@@ -168,7 +168,7 @@ const Header = () => {
             onClick={() => setIsOpen(false)}
           />
           <Image
-            src="/beygif.webp"
+            src="/mirologo.png"
             alt="Logo"
             width={100}
             height={100}

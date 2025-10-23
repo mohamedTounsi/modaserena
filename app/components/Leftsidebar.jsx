@@ -10,24 +10,30 @@ import {
   ListOrdered,
 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const Leftsidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
+
+  const navigate = (path) => {
+    router.push(path);
+    setIsOpen(false); // Close mobile menu
+  };
 
   return (
-    <div className="lg:h-screen lg:w-[350px] h-fit w-full bg-neutral-900 z-100 sticky top-0 ">
+    <div className="lg:h-screen lg:w-[350px] h-fit w-full bg-neutral-900 z-100 sticky top-0">
       <div className="flex flex-col items-center justify-center py-4">
-        <Link href="/">
+        <button onClick={() => navigate("/")}>
           <Image
-            src="/bnblogo.png"
+            src="/mirologo3.png"
             alt=""
             width={125}
             height={125}
-            className="filter invert brightness-200"
+            className=""
           />
-        </Link>
+        </button>
 
         {/* Hamburger Icon */}
         <button
@@ -43,34 +49,19 @@ const Leftsidebar = () => {
             isOpen ? "block" : "hidden"
           } lg:flex`}
         >
-          <Link href="/dashbord/heroImage" onClick={() => setIsOpen(false)}>
-            <li className="flex flex-col lg:flex-row items-center gap-2 hover:bg-white hover:text-black transition-all duration-300 ease-in-out px-2 py-2 rounded-md">
-              <Images /> Hero Image
-            </li>
-          </Link>
-          <Link href="/dashbord/shopNowImage" onClick={() => setIsOpen(false)}>
-            <li className="flex flex-col lg:flex-row items-center gap-2 hover:bg-white hover:text-black transition-all duration-300 ease-in-out px-2 py-2 rounded-md">
-              <Store /> Shop Now Image
-            </li>
-          </Link>
-          <Link
-            href="/dashbord/recentCapsuleImages"
-            onClick={() => setIsOpen(false)}
+          <li
+            className="flex flex-col lg:flex-row items-center gap-2 hover:bg-white hover:text-black transition-all duration-300 ease-in-out px-2 py-2 rounded-md cursor-pointer"
+            onClick={() => navigate("/dashboard/products")}
           >
-            <li className="flex flex-col lg:flex-row items-center gap-2 hover:bg-white hover:text-black transition-all duration-300 ease-in-out px-2 py-2 rounded-md">
-              <PillBottle /> RECENT-capsule images
-            </li>
-          </Link>
-          <Link href="/dashbord/products" onClick={() => setIsOpen(false)}>
-            <li className="flex flex-col lg:flex-row items-center gap-2 hover:bg-white hover:text-black transition-all duration-300 ease-in-out px-2 py-2 rounded-md">
-              <Shirt /> Products
-            </li>
-          </Link>
-          <Link href="/dashbord/orders" onClick={() => setIsOpen(false)}>
-            <li className="flex flex-col lg:flex-row items-center gap-2 hover:bg-white hover:text-black transition-all duration-300 ease-in-out px-2 py-2 rounded-md">
-              <ListOrdered /> orders
-            </li>
-          </Link>
+            <Shirt /> Products
+          </li>
+
+          <li
+            className="flex flex-col lg:flex-row items-center gap-2 hover:bg-white hover:text-black transition-all duration-300 ease-in-out px-2 py-2 rounded-md cursor-pointer"
+            onClick={() => navigate("/dashboard/orders")}
+          >
+            <ListOrdered /> Orders
+          </li>
         </ul>
       </div>
     </div>

@@ -4,10 +4,9 @@ import connectDB from "@/lib/mongodb";
 import cloudinary from "cloudinary";
 import formidable from "formidable";
 import { Readable } from "stream";
-import fs from "fs";
 import fsPromises from "fs/promises";
 
-// Configure Cloudinary
+// ✅ Cloudinary Configuration
 cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -15,11 +14,9 @@ cloudinary.v2.config({
   secure: true,
 });
 
-export const config = {
-  api: { bodyParser: false },
-};
+export const config = { api: { bodyParser: false } };
 
-// Utility function to convert WebReadableStream to Node.js Readable
+// ✅ Convert WebReadable to Node.js Readable (for formidable)
 function readableFromWebReadable(webReadable) {
   const reader = webReadable.getReader();
   return new Readable({
@@ -31,18 +28,18 @@ function readableFromWebReadable(webReadable) {
   });
 }
 
-// Function to check if ObjectId is valid
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
-// PUT Route (Update Product)
-export async function PUT(req, { params }) {
+export async function PUT(req, context) {
+  const params = await context.params;
+  const { id } = params;
+
   try {
     await connectDB();
 
-    if (!isValidObjectId(params.id)) {
+    if (!isValidObjectId(id)) {
       return new Response(JSON.stringify({ message: "Invalid product ID" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -57,116 +54,132 @@ export async function PUT(req, { params }) {
       });
     });
 
+    // ✅ Parse fields properly
     const updatedData = Object.fromEntries(
-      Object.entries(fields).map(([key, value]) => [key, value[0]])
+      Object.entries(fields).map(([key, value]) => {
+        // Formidable gives arrays for each field
+        const val = Array.isArray(value) ? value[0] : value;
+
+        if (key === "sizes") {
+          try {
+            return [key, JSON.parse(val)]; // parse sizes JSON
+          } catch (err) {
+            console.error("Failed to parse sizes:", err);
+            return [key, {}]; // fallback
+          }
+        }
+
+        return [key, val];
+      })
     );
 
-    // Handle Image Upload (frontImg)
+    // ✅ Handle Image Uploads
     if (files.frontImg?.[0]?.filepath) {
-      const uploaded = await cloudinary.v2.uploader.upload(files.frontImg[0].filepath, {
-        folder: "productImages",
-        resource_type: "image",
-      });
+      const uploaded = await cloudinary.v2.uploader.upload(
+        files.frontImg[0].filepath,
+        { folder: "productImages" }
+      );
       updatedData.frontImg = uploaded.secure_url;
-      await fsPromises.unlink(files.frontImg[0].filepath); // cleanup temp file
+      await fsPromises.unlink(files.frontImg[0].filepath);
     }
 
-    // Handle Image Upload (backImg)
     if (files.backImg?.[0]?.filepath) {
-      const uploaded = await cloudinary.v2.uploader.upload(files.backImg[0].filepath, {
-        folder: "productImages",
-        resource_type: "image",
-      });
+      const uploaded = await cloudinary.v2.uploader.upload(
+        files.backImg[0].filepath,
+        { folder: "productImages" }
+      );
       updatedData.backImg = uploaded.secure_url;
-      await fsPromises.unlink(files.backImg[0].filepath); // cleanup temp file
+      await fsPromises.unlink(files.backImg[0].filepath);
     }
 
-    // Update Product in Database
-    await Product.findByIdAndUpdate(params.id, updatedData);
+    await Product.findByIdAndUpdate(id, updatedData, { new: true });
+
     return new Response(JSON.stringify({ message: "Product updated" }), {
       status: 200,
     });
   } catch (err) {
-    console.error(err);
+    console.error("Update error:", err);
     return new Response(JSON.stringify({ message: "Update failed" }), {
       status: 500,
     });
   }
 }
+export async function GET(req, context) {
+  const params = await context.params;
+  const { id } = params;
 
-// GET Route (Fetch Product by ID)
-export const GET = async (req) => {
   try {
     await connectDB();
-
-    const url = new URL(req.url);
-    const id = url.pathname.split("/").pop(); // get the last part (id)
 
     if (!isValidObjectId(id)) {
       return new Response(JSON.stringify({ message: "Invalid product ID" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
       });
     }
 
-    const product = await Product.findById(id);
-
+    const product = await Product.findById(id).lean(); // use lean() for plain JS object
     if (!product) {
       return new Response(JSON.stringify({ message: "Product not found" }), {
         status: 404,
-        headers: { "Content-Type": "application/json" },
       });
+    }
+
+    // ✅ Ensure sizes is always an object with number values
+    if (product.sizes) {
+      let sizesObj =
+        typeof product.sizes === "string" ? JSON.parse(product.sizes) : product.sizes;
+
+      // convert all values to numbers
+      product.sizes = Object.fromEntries(
+        Object.entries(sizesObj).map(([key, val]) => [key, Number(val) || 0])
+      );
+    } else {
+      product.sizes = {};
     }
 
     return new Response(JSON.stringify(product), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error fetching product by ID:", error);
+    console.error("Error fetching product:", error);
     return new Response(
       JSON.stringify({ message: "Failed to fetch product" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
+      { status: 500 }
     );
   }
-};
+}
 
-// DELETE Route (Delete Product by ID)
-export const DELETE = async (req) => {
+
+// ✅ DELETE — Remove product by ID
+export async function DELETE(req, context) {
+  const params = await context.params;
+  const { id } = params;
+
   try {
     await connectDB();
-
-    const url = new URL(req.url);
-    const id = url.pathname.split("/").pop(); // get the last part (id)
 
     if (!isValidObjectId(id)) {
       return new Response(JSON.stringify({ message: "Invalid product ID" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
       });
     }
 
-    const deletedProduct = await Product.findByIdAndDelete(id);
-
-    if (!deletedProduct) {
-      return new Response(
-        JSON.stringify({ message: "Product not found" }),
-        { status: 404, headers: { "Content-Type": "application/json" } }
-      );
+    const deleted = await Product.findByIdAndDelete(id);
+    if (!deleted) {
+      return new Response(JSON.stringify({ message: "Product not found" }), {
+        status: 404,
+      });
     }
 
     return new Response(
       JSON.stringify({ message: "Product deleted successfully" }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      { status: 200 }
     );
   } catch (error) {
     console.error("Error deleting product:", error);
     return new Response(
       JSON.stringify({ message: "Failed to delete product" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500 }
     );
   }
-};
+}

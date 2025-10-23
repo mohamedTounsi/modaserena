@@ -24,7 +24,7 @@ const LoadingOverlay = () => {
       }`}
     >
       <img
-        src="/bnblogo.png"
+        src="/mirologo3.png"
         alt="Logo"
         className="md:w-100 md:h-100 w-70 h-70 "
       />

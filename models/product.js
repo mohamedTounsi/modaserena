@@ -1,22 +1,31 @@
 import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema({
-  title: String,
-  price: String,
+  title: { type: String, required: true },
+  price: { type: String, required: true },
+  category: {
+    type: String,
+    enum: ["tshirt", "sneakers", "trouser"],
+    required: true,
+  },
   frontImg: String,
   backImg: String,
-  colors: [String],
-  date: String,
   description: String,
-  sizes: [String],
-  composition: String,
-  care: String,
-  xsmallQuantity: String,
-  smallQuantity: String,
-  mediumQuantity: String,
-  largeQuantity: String,
-  xlargeQuantity: String,
-  xxlargeQuantity: String,
+
+  // T-shirt sizes
+  xsmallQuantity: { type: String, default: "0" },
+  smallQuantity: { type: String, default: "0" },
+  mediumQuantity: { type: String, default: "0" },
+  largeQuantity: { type: String, default: "0" },
+  xlargeQuantity: { type: String, default: "0" },
+  xxlargeQuantity: { type: String, default: "0" },
+
+  // EUR sizes for sneakers/trousers
+  eurQuantities: {
+    type: Map,
+    of: String, // e.g., { "36": "10", "37": "5", "38": "0" }
+    default: {},
+  },
 });
 
 const Product =

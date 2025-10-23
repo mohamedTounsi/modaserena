@@ -1,9 +1,7 @@
 import { Geist, Geist_Mono, Assistant } from "next/font/google";
-import "./globals.css";
-import LoadingOverlay from "./components/LoadingOverlay";
-import { CartProvider } from "@/context/CartContext"; // ✅ Import the CartProvider
+import "../globals.css";
+import Leftsidebar from "../components/Leftsidebar";
 import { Toaster } from "react-hot-toast";
-
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -27,14 +25,14 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${assistant.variable} antialiased`}
-      >
-        <CartProvider> {/* ✅ Wrap your entire app with CartProvider */}
-          <Toaster position="top-center" />
-          <LoadingOverlay />
+      <body className={`${geistSans.variable} ${geistMono.variable} ${assistant.variable} antialiased`}>
+        <div className="flex flex-col lg:flex-row">
+          <Leftsidebar />
+          <Toaster position="top-center" reverseOrder={false} />
           {children}
-        </CartProvider>
+        </div>
+ 
+  
       </body>
     </html>
   );

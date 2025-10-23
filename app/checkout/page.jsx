@@ -32,7 +32,7 @@ const CheckoutPage = () => {
       city,
       postalCode,
       notes,
-      shippingMethod: "Jax Delivery - Aramex Delivery",
+      shippingMethod: "Delivery",
       paymentMethod: "Cash on Delivery",
       total: parseFloat(total),
       products: items.map((item) => ({
@@ -100,16 +100,16 @@ const CheckoutPage = () => {
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-white to-blue-50">
       <Header />
 
-      <main className="flex-grow px-4 py-10 md:px-16">
+      <main className="flex-grow px-4 py-10 md:px-16 text-zinc-800">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
           {/* Shipping Form */}
           <div className="md:col-span-2 bg-white p-8 rounded-2xl shadow-lg">
             <h2 className="text-3xl font-bold mb-8 text-gray-800">
               Shipping Information
             </h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6 text-zinc-800">
               {/* Personal Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-zinc-800">
                 <input
                   type="text"
                   placeholder="First Name"
@@ -190,9 +190,7 @@ const CheckoutPage = () => {
                       className="accent-blue-500"
                     />
                     <div>
-                      <p className="font-medium">
-                        Jax Delivery - Aramex Delivery
-                      </p>
+                      <p className="font-medium">Delivery</p>
                       <p className="text-sm text-gray-600">TND 8.000</p>
                     </div>
                   </label>

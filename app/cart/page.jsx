@@ -32,7 +32,7 @@ const CartPage = () => {
     <div className="flex flex-col min-h-screen">
       <Header />
 
-      <main className="flex-grow">
+      <main className="flex-grow text-zinc-900">
         {cart.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-[60vh] text-center">
             <h2 className="text-3xl font-light text-gray-600 mb-4">

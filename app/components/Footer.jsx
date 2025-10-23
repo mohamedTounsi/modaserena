@@ -13,35 +13,23 @@ const Footer = () => {
         <div className="flex flex-col items-start gap-4">
           <Link href="/">
             <Image
-              src="/beygif.webp"
+              src="/mirologo3.png"
               alt="logo"
               width={100}
               height={100}
-              className="filter invert brightness-200"
+              className=""
               priority
             />
           </Link>
 
           <div className="flex gap-4 mt-2">
-            <a
-              href="https://www.instagram.com/beyandbey/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href="#" target="_blank" rel="noopener noreferrer">
               <FaInstagram className="text-xl hover:text-gray-400 transition" />
             </a>
-            <a
-              href="https://www.facebook.com/beyandbey"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href="#" target="_blank" rel="noopener noreferrer">
               <FaFacebook className="text-xl hover:text-gray-400 transition" />
             </a>
-            <a
-              href="https://www.tiktok.com/@beyandbey?lang=fr"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href="#" target="_blank" rel="noopener noreferrer">
               <FaTiktok className="text-xl hover:text-gray-400 transition" />
             </a>
           </div>
@@ -96,7 +84,13 @@ const Footer = () => {
       </div>
 
       <div className="mt-10 border-t border-gray-700 pt-4 text-sm text-gray-500 text-center">
-        &copy; {new Date().getFullYear()} BEYNBEY. All rights reserved.
+        &copy; {new Date().getFullYear()} MiroFashion. All rights reserved.
+        <p>
+          Powered by{" "}
+          <a href="https://portfoliomt-kohl.vercel.app/" className="underline">
+            MT
+          </a>{" "}
+        </p>
       </div>
     </footer>
   );

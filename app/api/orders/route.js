@@ -3,6 +3,7 @@ import Order from "@/models/order";
 import Product from "@/models/product";
 import nodemailer from "nodemailer";
 
+// Function to send email notification for a new order
 const sendOrderNotification = async (order) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -15,25 +16,24 @@ const sendOrderNotification = async (order) => {
   const productList = order.products
     .map(
       (item) => `
-        <tr>
-          <td style="padding: 10px; border-bottom: 1px solid #eee;">
-            <img src="${item.image}" alt="${item.title}" width="60" style="border-radius: 6px; border: 1px solid #ccc;" />
-          </td>
-          <td style="padding: 10px;">
-            <strong>${item.title}</strong><br/>
-            Size: ${item.size}<br/>
-            Quantity: ${item.quantity}<br/>
-            Price: ${item.price} TND
-          </td>
-        </tr>
-      `
+      <tr>
+        <td style="padding: 10px; border-bottom: 1px solid #eee;">
+          <img src="${item.image}" alt="${item.title}" width="60" style="border-radius: 6px; border: 1px solid #ccc;" />
+        </td>
+        <td style="padding: 10px;">
+          <strong>${item.title}</strong><br/>
+          Size: ${item.size}<br/>
+          Quantity: ${item.quantity}<br/>
+          Price: ${item.price} TND
+        </td>
+      </tr>
+    `
     )
     .join("");
 
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; padding: 20px;">
       <div style="text-align: center; margin-bottom: 20px;">
-        <img src="https://www.google.com/search?sca_esv=c16ee7d0133e54f0&sxsrf=AHTn8zqrar07K2G0SziBJosaXUTybIBvmw:1746138847761&q=bey+and+bey&udm=2&fbs=ABzOT_BnMAgCWdhr5zilP5f1cnRvJ3SHQcDVxkdpDyHwlRhdNb8MZb946EdNuHMQzuxGUw74oYXoNfYork65SbvtgmADoQuDNOfIYOZgh-EdqYiT9isVCxL6a2RxXr6NAkN63TD6Qqw-7-fUiN0jY5XC7zkLf51Ehxa3b7ut1ReSfbc2CQ8ALiuVIxLMdwKnMyEX8QrReVeq&sa=X&ved=2ahUKEwjDiv-NqoONAxX0BNsEHe72ANMQtKgLegQIIBAB&biw=1920&bih=957&dpr=1#vhid=-6P0cxmO-DHvbM&vssid=mosaic" alt="Store Logo" style="height: 60px;" />
         <h2 style="color: #2b2b2b;">🛒 New Order Received</h2>
       </div>
 
@@ -51,12 +51,12 @@ const sendOrderNotification = async (order) => {
         ${productList}
       </table>
 
-      <p style="margin-top: 30px; font-size: 13px; color: #777;">Thank you for using our store notification system.</p>
+      <p style="margin-top: 30px; font-size: 13px; color: #777;">Thank you for your order!</p>
     </div>
   `;
 
   const mailOptions = {
-    from: `"Bey & Bey" <${process.env.GMAIL_USER}>`,
+    from: `"Your Store" <${process.env.GMAIL_USER}>`,
     to: process.env.NOTIFY_EMAIL,
     subject: `New Order from ${order.firstName} ${order.lastName}`,
     html: htmlContent,
@@ -65,6 +65,7 @@ const sendOrderNotification = async (order) => {
   await transporter.sendMail(mailOptions);
 };
 
+// POST - Create new order
 export async function POST(req) {
   await connectDB();
   const data = await req.json();
@@ -74,22 +75,27 @@ export async function POST(req) {
       const product = await Product.findById(item.productId);
       if (!product) continue;
 
-      const sizeKeyMap = {
-        XS: "xsmallQuantity",
-        S: "smallQuantity",
-        M: "mediumQuantity",
-        L: "largeQuantity",
-        XL: "xlargeQuantity",
-        XXL: "xxlargeQuantity",
-      };
-
-      const sizeKey = sizeKeyMap[item.size];
-      if (sizeKey) {
-        const currentQty = parseInt(product[sizeKey] || "0");
-        const newQuantity = currentQty - item.quantity;
-        product[sizeKey] = Math.max(0, newQuantity).toString();
-        await product.save();
+      if (["tshirt", "hoodie", "dress", "skirt"].includes(product.category)) {
+        const sizeKeyMap = {
+          XS: "xsmallQuantity",
+          S: "smallQuantity",
+          M: "mediumQuantity",
+          L: "largeQuantity",
+          XL: "xlargeQuantity",
+          XXL: "xxlargeQuantity",
+        };
+        const sizeKey = sizeKeyMap[item.size];
+        if (sizeKey) {
+          const currentQty = parseInt(product[sizeKey] || "0");
+          product[sizeKey] = Math.max(0, currentQty - item.quantity).toString();
+        }
+      } else {
+        // Sneakers / trousers: EUR sizes (Map)
+        const currentQty = parseInt(product.eurQuantities.get(item.size) || "0");
+        product.eurQuantities.set(item.size, Math.max(0, currentQty - item.quantity).toString());
       }
+
+      await product.save();
     }
 
     const newOrder = await Order.create(data);
@@ -107,8 +113,7 @@ export async function POST(req) {
   }
 }
 
-
-// GET - Fetch all orders, split into pending and delivered
+// GET - Fetch all orders (pending & delivered)
 export async function GET() {
   try {
     await connectDB();
