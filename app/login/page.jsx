@@ -38,19 +38,21 @@ export default function LoginPage() {
         onSubmit={handleLogin}
         className="bg-white p-8 rounded-xl shadow-md w-full max-w-md"
       >
-        <h1 className="text-2xl font-semibold mb-6 text-center">Admin Login</h1>
+        <h1 className="text-2xl font-semibold mb-6 text-center text-zinc-800">
+          Admin Login
+        </h1>
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
         <input
           type="text"
           placeholder="Username"
-          className="w-full mb-4 px-4 py-2 border rounded-md"
+          className="w-full mb-4 px-4 py-2 border rounded-md text-zinc-800"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
         <input
           type="password"
           placeholder="Password"
-          className="w-full mb-4 px-4 py-2 border rounded-md"
+          className="w-full mb-4 px-4 py-2 border rounded-md text-zinc-800"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
