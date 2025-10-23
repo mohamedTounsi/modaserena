@@ -1,3 +1,4 @@
+// app/api/products/route.js
 import { NextResponse } from "next/server";
 import { Readable } from "stream";
 import formidable from "formidable";
@@ -18,6 +19,7 @@ export const config = {
   api: { bodyParser: false },
 };
 
+// Helper: convert Web ReadableStream to Node Readable
 function readableFromWebReadable(webReadable) {
   const reader = webReadable.getReader();
   return new Readable({
@@ -29,6 +31,7 @@ function readableFromWebReadable(webReadable) {
   });
 }
 
+// POST: create product
 export async function POST(req) {
   try {
     await connectDB();
@@ -86,7 +89,7 @@ export async function POST(req) {
 
     const category = fields.category[0];
 
-    // Prepare product data based on category
+    // Prepare product data
     const productData = {
       title: fields.title[0],
       price: fields.price[0],
@@ -97,7 +100,7 @@ export async function POST(req) {
     };
 
     if (category === "tshirt") {
-      // Map standard sizes
+      // Standard T-shirt sizes
       productData.xsmallQuantity = sizes["XS"] || "0";
       productData.smallQuantity = sizes["S"] || "0";
       productData.mediumQuantity = sizes["M"] || "0";
@@ -105,8 +108,8 @@ export async function POST(req) {
       productData.xlargeQuantity = sizes["XL"] || "0";
       productData.xxlargeQuantity = sizes["XXL"] || "0";
     } else {
-      // For sneakers & trousers → EUR sizes
-      productData.eurQuantities = new Map(Object.entries(sizes));
+      // Sneakers & trousers → EUR sizes as plain object
+      productData.eurQuantities = Object.fromEntries(Object.entries(sizes));
     }
 
     const newProduct = await Product.create(productData);
@@ -121,16 +124,25 @@ export async function POST(req) {
   }
 }
 
+// GET: fetch all products
 export async function GET() {
   try {
     await connectDB();
     const products = await Product.find().sort({ createdAt: -1 });
-    return NextResponse.json(products, { status: 200 });
+
+    // Convert Maps to plain objects
+    const cleanProducts = products.map((p) => {
+      const obj = p.toObject();
+      if (obj.eurQuantities instanceof Map) {
+        obj.eurQuantities = Object.fromEntries(obj.eurQuantities);
+      }
+      return obj;
+    });
+
+    return NextResponse.json(cleanProducts, { status: 200 });
   } catch (error) {
     console.error("Error fetching products:", error);
-    return NextResponse.json(
-      { message: "Failed to get products", error: error.message },
-      { status: 500 }
-    );
+    // Always return array to avoid frontend filter crash
+    return NextResponse.json([], { status: 200 });
   }
 }
