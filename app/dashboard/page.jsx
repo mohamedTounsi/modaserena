@@ -18,20 +18,25 @@ const DashboardPage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <p>Loading dashboard...</p>
+      <div className="flex justify-center items-center min-h-screen bg-white">
+        <p className="text-pink-500 animate-pulse text-lg font-medium">
+          Loading dashboard...
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-4">Welcome to the Dashboard</h1>
-      <p className="text-gray-600">
+    <div className="p-6 lg:p-10 bg-white min-h-screen">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold mb-2 text-gray-900">
+          Welcome to the Dashboard
+        </h1>
+        <div className="w-24 h-1 bg-gradient-to-r from-pink-500 to-pink-300 rounded-full"></div>
+      </div>
+      <p className="text-gray-600 text-lg">
         This area is protected and only visible to logged-in admins.
       </p>
-
-      {/* Your dashboard content goes here */}
     </div>
   );
 };

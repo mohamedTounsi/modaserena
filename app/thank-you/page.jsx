@@ -13,58 +13,57 @@ const ThankYouPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-zinc-50 via-gray-100 to-blue-50 px-4 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white px-4 relative overflow-hidden">
       {/* Background decorative elements */}
-      <div className="absolute top-10 left-10 w-20 h-20 bg-blue-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse"></div>
-      <div className="absolute bottom-10 right-10 w-32 h-32 bg-zinc-200 rounded-full mix-blend-multiply filter blur-xl opacity-50 animate-pulse delay-1000"></div>
-      <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-gray-100 rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-pulse delay-500"></div>
+      <div className="absolute top-20 left-10 w-24 h-24 bg-pink-100 rounded-full mix-blend-multiply filter blur-2xl opacity-40 animate-pulse"></div>
+      <div className="absolute bottom-20 right-10 w-32 h-32 bg-pink-50 rounded-full mix-blend-multiply filter blur-2xl opacity-30 animate-pulse delay-1000"></div>
 
       {/* Logo */}
-      <div className="mb-8 relative">
-        <div className="absolute -inset-4 bg-white/70 rounded-2xl shadow-lg transform rotate-3 opacity-60"></div>
-        <div className="relative bg-white p-6 rounded-2xl shadow-xl border border-gray-200">
+      <div className="mb-8 relative z-10">
+        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
           <Image
-            src="/mirologo3.png"
-            alt="Logo"
-            width={120}
-            height={60}
+            src="/modaserenalogo1.png"
+            alt="ModaSerena Logo"
+            width={100}
+            height={50}
             className="object-contain"
           />
         </div>
       </div>
 
       {/* Success Card */}
-      <div className="max-w-lg w-full bg-white rounded-3xl shadow-2xl border border-gray-200 p-8 relative z-10 transform hover:scale-[1.02] transition-all duration-300">
+      <div className="max-w-lg w-full bg-white rounded-2xl shadow-lg border border-pink-100 p-8 relative z-10">
         {/* Success Icon */}
         <div className="relative mb-6">
-          <div className="absolute inset-0 bg-blue-50 rounded-full animate-ping opacity-20"></div>
-          <div className="relative bg-gradient-to-br from-blue-500 to-zinc-500 w-24 h-24 rounded-full flex items-center justify-center mx-auto shadow-lg">
-            <CheckCircle className="text-white w-12 h-12" />
+          <div className="absolute inset-0 bg-pink-50 rounded-full animate-ping opacity-20"></div>
+          <div className="relative bg-gradient-to-br from-pink-500 to-pink-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto shadow-md">
+            <CheckCircle className="text-white w-10 h-10" />
           </div>
-          <Sparkles className="absolute -top-2 -right-2 text-blue-400 w-6 h-6 animate-bounce" />
+          <Sparkles className="absolute -top-1 -right-1 text-pink-400 w-5 h-5 animate-bounce" />
         </div>
 
         {/* Content */}
-        <h1 className="text-3xl text-center font-bold text-gray-900 mb-4 tracking-tight">
-          Thank You for Your Order!
+        <h1 className="text-2xl md:text-3xl text-center font-bold text-gray-900 mb-2">
+          Order Confirmed!
         </h1>
 
-        <p className="text-gray-600 mb-2 leading-relaxed">
-          Your order has been successfully placed and is being processed.
+        <p className="text-gray-700 text-center text-sm mb-4 leading-relaxed">
+          Thank you for your purchase. Your order has been successfully placed
+          and is being processed.
         </p>
 
-        <div className="flex items-center justify-center gap-2 text-gray-500 mb-6">
-          <Package className="w-4 h-4" />
-          <span className="text-sm">
-            We'll begin preparing your package shortly
+        <div className="flex items-center justify-center gap-2 text-gray-600 mb-6 bg-gray-50 rounded-lg py-3 px-4">
+          <Package className="w-4 h-4 text-pink-500" />
+          <span className="text-xs font-medium">
+            We're preparing your package for shipment
           </span>
         </div>
 
         {/* Order Details Card */}
-        <div className="bg-zinc-50 rounded-2xl p-4 mb-8 border border-gray-200">
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <span>Estimated Delivery</span>
-            <span className="font-medium text-gray-900">3-5 Business Days</span>
+        <div className="bg-gray-50 rounded-lg p-4 mb-8 border border-gray-200">
+          <div className="flex items-center justify-between text-xs text-gray-700">
+            <span className="font-medium">Estimated Delivery</span>
+            <span className="font-bold text-gray-900">3-5 Business Days</span>
           </div>
         </div>
 
@@ -72,14 +71,14 @@ const ThankYouPage = () => {
         <div className="flex flex-col sm:flex-row gap-3">
           <Link
             href="/"
-            className="flex-1 px-6 py-4 rounded-xl bg-zinc-900 text-white hover:bg-zinc-800 transition-all font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-2 group"
+            className="flex-1 px-6 py-3 rounded-lg bg-black text-white hover:bg-gray-900 transition-all font-semibold text-sm shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center gap-2 group"
           >
             <Heart className="w-4 h-4 group-hover:scale-110 transition-transform" />
             Home
           </Link>
           <Link
             href="/shop"
-            className="flex-1 px-6 py-4 rounded-xl border-2 border-gray-300 text-gray-700 hover:border-blue-400 hover:bg-blue-50 transition-all font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-2 group"
+            className="flex-1 px-6 py-3 rounded-lg border-2 border-gray-300 text-gray-900 hover:border-pink-400 hover:bg-pink-50 transition-all font-semibold text-sm shadow-sm hover:shadow-md cursor-pointer flex items-center justify-center gap-2 group"
           >
             <Sparkles className="w-4 h-4 group-hover:scale-110 transition-transform" />
             Continue Shopping
@@ -88,11 +87,11 @@ const ThankYouPage = () => {
 
         {/* Footer Note */}
         <div className="mt-6 pt-4 border-t border-gray-200">
-          <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
+          <p className="text-xs text-gray-600 flex items-center justify-center gap-1">
             Need help?{" "}
             <Link
-              href=""
-              className="text-blue-500 hover:text-blue-600 underline"
+              href="#"
+              className="text-pink-500 hover:text-pink-600 font-semibold"
             >
               Contact Us
             </Link>
@@ -100,13 +99,9 @@ const ThankYouPage = () => {
         </div>
       </div>
 
-      {/* Floating elements */}
-      <div className="absolute bottom-20 left-20 animate-float">
-        <div className="w-3 h-3 bg-blue-400 rounded-full opacity-60"></div>
-      </div>
-      <div className="absolute top-20 right-20 animate-float delay-1000">
-        <div className="w-2 h-2 bg-gray-400 rounded-full opacity-40"></div>
-      </div>
+      {/* Floating decoration */}
+      <div className="absolute bottom-32 left-1/4 w-2 h-2 bg-pink-300 rounded-full opacity-40 animate-pulse"></div>
+      <div className="absolute top-1/3 right-1/4 w-1.5 h-1.5 bg-pink-200 rounded-full opacity-30 animate-pulse delay-700"></div>
     </div>
   );
 };

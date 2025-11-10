@@ -4,68 +4,75 @@ import { useRouter, useParams } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { Upload } from "lucide-react";
 
-const EditProductPage = () => {
+export default function EditProductPage() {
   const { id } = useParams();
   const router = useRouter();
 
   const categories = [
-    { value: "tshirt", label: "T-shirt" },
-    { value: "hoodie", label: "Sweat à capuche" },
-    { value: "trouser", label: "Pantalon" },
-    { value: "dress", label: "Robe" },
-    { value: "skirt", label: "Jupe" },
-    { value: "sneakers", label: "Chaussures" },
-    { value: "all", label: "Tous" },
+    { value: "robe", label: "Robe" },
+    { value: "sweatshirt à capuche", label: "Sweatshirt à capuche" },
+    { value: "jupe", label: "Jupe" },
+    { value: "chemise", label: "Chemise" },
+    { value: "pull", label: "Pull" },
+    { value: "pantalon", label: "Pantalon" },
+    { value: "top", label: "Top" },
+    { value: "maillots de bain", label: "Maillots de bain" },
   ];
 
-  const tshirtSizes = ["XS", "S", "M", "L", "XL", "XXL"];
-  const eurSizes = Array.from({ length: 10 }, (_, i) => 36 + i); // 36–45
+  const sizeKeys = [
+    "xsQuantity",
+    "sQuantity",
+    "mQuantity",
+    "lQuantity",
+    "xlQuantity",
+    "xxlQuantity",
+    "xxxlQuantity",
+  ];
 
-  const [category, setCategory] = useState("tshirt");
   const [form, setForm] = useState({
     title: "",
     price: "",
     description: "",
+    category: "robe",
+    xsQuantity: 0,
+    sQuantity: 0,
+    mQuantity: 0,
+    lQuantity: 0,
+    xlQuantity: 0,
+    xxlQuantity: 0,
+    xxxlQuantity: 0,
   });
 
-  const [sizes, setSizes] = useState({});
   const [frontImg, setFrontImg] = useState(null);
   const [backImg, setBackImg] = useState(null);
   const [previewFront, setPreviewFront] = useState(null);
   const [previewBack, setPreviewBack] = useState(null);
-  const [existingFront, setExistingFront] = useState("");
-  const [existingBack, setExistingBack] = useState("");
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const res = await fetch(`/api/products/${id}`);
+        if (!res.ok) throw new Error("Failed to fetch product");
         const data = await res.json();
 
         setForm({
           title: data.title || "",
           price: data.price || "",
           description: data.description || "",
+          category: data.category || "robe",
+          xsQuantity: data.xsQuantity || 0,
+          sQuantity: data.sQuantity || 0,
+          mQuantity: data.mQuantity || 0,
+          lQuantity: data.lQuantity || 0,
+          xlQuantity: data.xlQuantity || 0,
+          xxlQuantity: data.xxlQuantity || 0,
+          xxxlQuantity: data.xxxlQuantity || 0,
         });
 
-        setCategory(data.category || "tshirt");
-
-        // ✅ Parse sizes if it is a string
-        let productSizes = {};
-        if (data.sizes) {
-          productSizes =
-            typeof data.sizes === "string"
-              ? JSON.parse(data.sizes)
-              : data.sizes;
-        }
-        setSizes(productSizes);
-
-        setExistingFront(data.frontImg || "");
-        setExistingBack(data.backImg || "");
-
-        if (data.frontImg) setPreviewFront(data.frontImg);
-        if (data.backImg) setPreviewBack(data.backImg);
-      } catch (error) {
+        setPreviewFront(data.frontImg || null);
+        setPreviewBack(data.backImg || null);
+      } catch (err) {
+        console.error(err);
         toast.error("Failed to load product");
       }
     };
@@ -78,6 +85,10 @@ const EditProductPage = () => {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleSizeChange = (size, value) => {
+    setForm((prev) => ({ ...prev, [size]: value === "" ? 0 : Number(value) }));
+  };
+
   const handleFileChange = (e) => {
     const { name, files } = e.target;
     const file = files[0];
@@ -86,28 +97,17 @@ const EditProductPage = () => {
     if (name === "frontImg") {
       setFrontImg(file);
       setPreviewFront(URL.createObjectURL(file));
-    } else {
+    } else if (name === "backImg") {
       setBackImg(file);
       setPreviewBack(URL.createObjectURL(file));
     }
-  };
-
-  const handleSizeChange = (size, value) => {
-    setSizes((prev) => ({
-      ...prev,
-      [size]: value === "" ? 0 : Number(value),
-    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = new FormData();
 
-    data.append("title", form.title);
-    data.append("price", form.price);
-    data.append("description", form.description);
-    data.append("category", category);
-    data.append("sizes", JSON.stringify(sizes));
+    Object.entries(form).forEach(([key, value]) => data.append(key, value));
 
     if (frontImg) data.append("frontImg", frontImg);
     if (backImg) data.append("backImg", backImg);
@@ -174,11 +174,9 @@ const EditProductPage = () => {
           <div className="flex flex-col">
             <label className="font-medium">Category</label>
             <select
-              value={category}
-              onChange={(e) => {
-                setCategory(e.target.value);
-                setSizes({});
-              }}
+              name="category"
+              value={form.category}
+              onChange={handleChange}
               className="p-2 border rounded-lg"
             >
               {categories.map((cat) => (
@@ -202,26 +200,20 @@ const EditProductPage = () => {
 
           {/* Sizes */}
           <div className="flex flex-col">
-            <label className="font-medium mb-2">
-              {category === "sneakers" || category === "trouser"
-                ? "EUR Pointures"
-                : "Tailles (XS–XXL)"}
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {(category === "sneakers" || category === "trouser"
-                ? eurSizes
-                : tshirtSizes
-              ).map((size) => (
-                <div key={size} className="flex flex-col items-center">
-                  <span className="text-sm font-medium">{size}</span>
+            <label className="font-medium mb-2">Quantités par taille</label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {sizeKeys.map((size) => (
+                <div key={size} className="flex flex-col">
+                  <label className="text-sm font-medium uppercase mb-1">
+                    {size.replace("Quantity", "")}
+                  </label>
                   <input
                     type="number"
                     min="0"
-                    className="p-1 border rounded-lg text-center w-16"
-                    value={sizes[String(size)] || ""}
-                    onChange={(e) =>
-                      handleSizeChange(String(size), e.target.value)
-                    }
+                    name={size}
+                    value={form[size]}
+                    onChange={(e) => handleSizeChange(size, e.target.value)}
+                    className="p-2 border rounded-lg"
                   />
                 </div>
               ))}
@@ -283,6 +275,4 @@ const EditProductPage = () => {
       </div>
     </div>
   );
-};
-
-export default EditProductPage;
+}

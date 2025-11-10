@@ -15,12 +15,13 @@ const Header = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState([]);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   // Fetch products from API
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch("/api/products"); // Update if your endpoint differs
+        const res = await fetch("/api/products");
         const data = await res.json();
         setProducts(data);
       } catch (error) {
@@ -31,6 +32,15 @@ const Header = () => {
     fetchProducts();
   }, []);
 
+  // Detect scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const filteredProducts = useMemo(() => {
     return products?.filter((p) =>
       p.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -39,61 +49,79 @@ const Header = () => {
 
   const navItems = [
     { name: "Home", path: "/" },
-    { name: "Shop", path: "/shop" },
-    { name: "About", path: "/about" },
+    { name: "Shop", path: "/shopcategories" },
+    { name: "Contact", path: "#" },
   ];
 
   return (
     <>
-      <div className="flex w-[80%] mx-auto justify-between items-center py-4 px-8 lg:px-16 border-b border-gray-200">
-        <Menu
-          className="cursor-pointer md:hidden"
-          onClick={() => setIsOpen(true)}
-        />
-        <Link href="/" prefetch>
-          <Image
-            src="/mirologo3.png"
-            alt="Logo"
-            width={90}
-            height={90}
-            priority
+      <header
+        className={`fixed top-0 left-0 w-full z-50 bg-white shadow-md transition-all duration-300 ${
+          isScrolled ? "py-1 md:py-2" : "py-3 md:py-4"
+        }`}
+      >
+        <div className="flex md:w-[90%] mx-auto justify-between items-center px-4 lg:px-16">
+          <Menu
+            className="cursor-pointer text-zinc-800 md:hidden"
+            onClick={() => setIsOpen(true)}
           />
-        </Link>
-
-        <ul className="hidden md:flex text-black gap-6">
-          {navItems.map((item) => (
-            <li key={item.path}>
-              <Link
-                href={item.path}
-                className={`hover:text-gray-400 transition ${
-                  pathname === item.path
-                    ? "underline underline-offset-4 font-semibold"
-                    : ""
-                }`}
-              >
-                {item.name}
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        <div className="flex items-center text-black gap-4">
-          <Search
-            onClick={() => setIsSearchOpen(!isSearchOpen)}
-            className="cursor-pointer"
-          />
-          <Link href="/cart" prefetch>
-            <div className="relative">
-              <ShoppingCart className="cursor-pointer" />
-              {totalQuantity > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold px-1.5 py-0.5 rounded-full">
-                  {totalQuantity}
-                </span>
-              )}
+          <Link href="/" prefetch>
+            <div
+              className={`transition-all duration-300 ${
+                isScrolled
+                  ? "w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14"
+                  : "w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20"
+              }`}
+            >
+              <Image
+                src="/modaserenalogo1.png"
+                alt="Logo"
+                width={112}
+                height={112}
+                priority
+              />
             </div>
           </Link>
+
+          <ul
+            className={`hidden md:flex text-black gap-6 transition-all duration-300 ${
+              isScrolled ? "text-sm" : "text-base"
+            }`}
+          >
+            {navItems.map((item) => (
+              <li key={item.path}>
+                <Link
+                  href={item.path}
+                  className={`hover:text-gray-400 transition ${
+                    pathname === item.path
+                      ? "underline underline-offset-4 font-semibold"
+                      : ""
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          <div className="flex items-center text-black gap-4">
+            <Search
+              onClick={() => setIsSearchOpen(!isSearchOpen)}
+              className="cursor-pointer"
+            />
+            <Link href="/cart" prefetch>
+              <div className="relative">
+                <ShoppingCart className="cursor-pointer" />
+                {totalQuantity > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold px-1.5 py-0.5 rounded-full">
+                    {totalQuantity}
+                  </span>
+                )}
+              </div>
+            </Link>
+          </div>
         </div>
-      </div>
+      </header>
 
       {/* Search Dropdown */}
       <div
@@ -157,21 +185,21 @@ const Header = () => {
 
       {/* Mobile Menu */}
       <div
-        className={`fixed top-0 left-0 w-full h-full bg-white z-50 transition-transform duration-300 ${
+        className={`fixed top-0 left-0 w-full h-full bg-white text-zinc-900 z-50 transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex justify-between items-center p-6">
           <X
-            className="cursor-pointer"
+            className="cursor-pointer text-zinc-900"
             size={32}
             onClick={() => setIsOpen(false)}
           />
           <Image
-            src="/mirologo.png"
+            src="/modaserenalogo1.png"
             alt="Logo"
-            width={100}
-            height={100}
+            width={80}
+            height={80}
             priority
           />
         </div>

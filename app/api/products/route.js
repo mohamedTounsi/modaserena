@@ -15,9 +15,7 @@ cloudinary.v2.config({
   secure: true,
 });
 
-export const config = {
-  api: { bodyParser: false },
-};
+export const config = { api: { bodyParser: false } };
 
 // Helper: convert Web ReadableStream to Node Readable
 function readableFromWebReadable(webReadable) {
@@ -31,7 +29,7 @@ function readableFromWebReadable(webReadable) {
   });
 }
 
-// POST: create product
+// POST — Create product
 export async function POST(req) {
   try {
     await connectDB();
@@ -47,7 +45,6 @@ export async function POST(req) {
       });
     });
 
-    // Required fields
     const requiredFields = ["title", "price", "category"];
     for (const field of requiredFields) {
       if (!fields[field]) {
@@ -60,63 +57,51 @@ export async function POST(req) {
 
     if (!files.frontImg || !files.backImg) {
       return NextResponse.json(
-        { message: "Both images are required" },
+        { message: "Both front and back images are required" },
         { status: 400 }
       );
     }
 
-    // Upload to Cloudinary
+    // Upload helper
     const uploadToCloudinary = async (file) => {
       const result = await cloudinary.v2.uploader.upload(file.filepath, {
         folder: "productImages",
         resource_type: "image",
         quality: "auto:eco",
       });
-      fs.unlinkSync(file.filepath); // remove temp file
+      fs.unlinkSync(file.filepath);
       return result.secure_url;
     };
 
     const frontImgUrl = await uploadToCloudinary(files.frontImg[0]);
     const backImgUrl = await uploadToCloudinary(files.backImg[0]);
 
-    // Parse sizes (dynamic quantities)
-    let sizes = {};
-    try {
-      sizes = JSON.parse(fields.sizes?.[0] || "{}");
-    } catch {
-      sizes = {};
-    }
+    const category = Array.isArray(fields.category)
+      ? fields.category[0]
+      : fields.category;
 
-    const category = fields.category[0];
-
-    // Prepare product data
     const productData = {
-      title: fields.title[0],
-      price: fields.price[0],
+      title: Array.isArray(fields.title) ? fields.title[0] : fields.title,
+      price: Number(Array.isArray(fields.price) ? fields.price[0] : fields.price),
       category,
-      description: fields.description?.[0] || "",
+      description: Array.isArray(fields.description)
+        ? fields.description[0]
+        : fields.description || "",
       frontImg: frontImgUrl,
       backImg: backImgUrl,
+      xsQuantity: Number(fields.xsQuantity?.[0] || 0),
+      sQuantity: Number(fields.sQuantity?.[0] || 0),
+      mQuantity: Number(fields.mQuantity?.[0] || 0),
+      lQuantity: Number(fields.lQuantity?.[0] || 0),
+      xlQuantity: Number(fields.xlQuantity?.[0] || 0),
+      xxlQuantity: Number(fields.xxlQuantity?.[0] || 0),
+      xxxlQuantity: Number(fields.xxxlQuantity?.[0] || 0),
     };
 
-    if (category === "tshirt") {
-      // Standard T-shirt sizes
-      productData.xsmallQuantity = sizes["XS"] || "0";
-      productData.smallQuantity = sizes["S"] || "0";
-      productData.mediumQuantity = sizes["M"] || "0";
-      productData.largeQuantity = sizes["L"] || "0";
-      productData.xlargeQuantity = sizes["XL"] || "0";
-      productData.xxlargeQuantity = sizes["XXL"] || "0";
-    } else {
-      // Sneakers & trousers → EUR sizes as plain object
-      productData.eurQuantities = Object.fromEntries(Object.entries(sizes));
-    }
-
     const newProduct = await Product.create(productData);
-
     return NextResponse.json(newProduct, { status: 201 });
   } catch (error) {
-    console.error("Error uploading product:", error);
+    console.error("❌ Error creating product:", error);
     return NextResponse.json(
       { message: "Failed to create product", error: error.message },
       { status: 500 }
@@ -124,25 +109,74 @@ export async function POST(req) {
   }
 }
 
-// GET: fetch all products
-export async function GET() {
+// GET — Fetch all products
+export async function GET(req) {
   try {
     await connectDB();
-    const products = await Product.find().sort({ createdAt: -1 });
+    const url = new URL(req.url);
+    const category = url.searchParams.get("category");
 
-    // Convert Maps to plain objects
-    const cleanProducts = products.map((p) => {
-      const obj = p.toObject();
-      if (obj.eurQuantities instanceof Map) {
-        obj.eurQuantities = Object.fromEntries(obj.eurQuantities);
-      }
-      return obj;
-    });
+    let query = {};
+    if (category && category !== "all") {
+      query.category = category.toLowerCase();
+    }
 
-    return NextResponse.json(cleanProducts, { status: 200 });
+    const products = await Product.find(query).sort({ createdAt: -1 });
+    return NextResponse.json(products, { status: 200 });
   } catch (error) {
     console.error("Error fetching products:", error);
-    // Always return array to avoid frontend filter crash
     return NextResponse.json([], { status: 200 });
+  }
+}
+
+// PATCH — Decrease stock after checkout
+export async function PATCH(req) {
+  try {
+    await connectDB();
+    const { products } = await req.json();
+
+    if (!products || !Array.isArray(products)) {
+      return NextResponse.json({ message: "Invalid products array" }, { status: 400 });
+    }
+
+    const bulkOps = products.map((item) => {
+      const normalizedSize = item.size?.toLowerCase();
+      const validSizes = ["xs", "s", "m", "l", "xl", "xxl", "xxxl"];
+
+      if (!validSizes.includes(normalizedSize)) {
+        console.warn(`⚠️ Invalid size '${item.size}' for product ${item._id}`);
+        return null;
+      }
+
+      const sizeField = `${normalizedSize}Quantity`;
+      const quantityToDecrement = Number(item.quantity);
+
+      if (quantityToDecrement <= 0) {
+        console.warn(`⚠️ Skipping product ${item._id}, invalid quantity: ${item.quantity}`);
+        return null;
+      }
+
+      return {
+        updateOne: {
+          filter: { _id: item._id, [sizeField]: { $gte: quantityToDecrement } },
+          update: { $inc: { [sizeField]: -quantityToDecrement } },
+        },
+      };
+    }).filter(Boolean);
+
+    if (bulkOps.length > 0) {
+      const result = await Product.bulkWrite(bulkOps);
+      console.log("✅ Stock updated:", result);
+    } else {
+      console.warn("⚠️ No valid products to update stock");
+    }
+
+    return NextResponse.json({ message: "Stock updated successfully ✅" }, { status: 200 });
+  } catch (error) {
+    console.error("❌ Error updating stock:", error);
+    return NextResponse.json(
+      { message: "Failed to update stock", error: error.message },
+      { status: 500 }
+    );
   }
 }

@@ -67,22 +67,25 @@ const sendOrderNotification = async (order) => {
 
 // POST - Create new order
 export async function POST(req) {
-  await connectDB();
-  const data = await req.json();
-
   try {
+    await connectDB();
+    const data = await req.json();
+
+    // Deduct quantities for each product
     for (const item of data.products) {
-      const product = await Product.findById(item.productId);
+      const product = await Product.findById(item._id || item.productId);
       if (!product) continue;
 
-      if (["tshirt", "hoodie", "dress", "skirt"].includes(product.category)) {
+      // Products with XS-XXXL sizes
+      if (["robe", "sweatshirt à capuche", "jupe", "chemise", "pull", "top", "maillots de bain"].includes(product.category)) {
         const sizeKeyMap = {
-          XS: "xsmallQuantity",
-          S: "smallQuantity",
-          M: "mediumQuantity",
-          L: "largeQuantity",
-          XL: "xlargeQuantity",
-          XXL: "xxlargeQuantity",
+          XS: "xsQuantity",
+          S: "sQuantity",
+          M: "mQuantity",
+          L: "lQuantity",
+          XL: "xlQuantity",
+          XXL: "xxlQuantity",
+          XXXL: "xxxlQuantity",
         };
         const sizeKey = sizeKeyMap[item.size];
         if (sizeKey) {
@@ -90,16 +93,19 @@ export async function POST(req) {
           product[sizeKey] = Math.max(0, currentQty - item.quantity).toString();
         }
       } else {
-        // Sneakers / trousers: EUR sizes (Map)
-        const currentQty = parseInt(product.eurQuantities.get(item.size) || "0");
-        product.eurQuantities.set(item.size, Math.max(0, currentQty - item.quantity).toString());
+        // EUR sizes (sneakers, trousers, etc.)
+        if (!product.eurQuantities) product.eurQuantities = {};
+        const currentQty = parseInt(product.eurQuantities[item.size] || "0");
+        product.eurQuantities[item.size] = Math.max(0, currentQty - item.quantity).toString();
       }
 
       await product.save();
     }
 
+    // Create order
     const newOrder = await Order.create(data);
 
+    // Send email notification
     try {
       await sendOrderNotification(newOrder);
     } catch (mailErr) {
@@ -113,24 +119,21 @@ export async function POST(req) {
   }
 }
 
-// GET - Fetch all orders (pending & delivered)
+// GET - Fetch all orders
 export async function GET() {
   try {
     await connectDB();
-
     const orders = await Order.find().sort({ createdAt: -1 });
 
-    const pendingOrders = orders.filter(order => !order.isDelivered);
-    const deliveredOrders = orders.filter(order => order.isDelivered);
+    const pendingOrders = orders.filter((order) => !order.isDelivered);
+    const deliveredOrders = orders.filter((order) => order.isDelivered);
 
     return new Response(JSON.stringify({ pendingOrders, deliveredOrders }), {
       status: 200,
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("Failed to fetch orders:", error);
-    return new Response("Failed to fetch orders", { status: 500 });
+    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   }
 }

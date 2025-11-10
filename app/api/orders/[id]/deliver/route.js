@@ -2,7 +2,7 @@ import connectDB from "@/lib/mongodb";
 import Order from "@/models/order";
 
 export async function PUT(request, context) {
-  const { id } = await context.params; // ✅ Await the params
+  const { id } = context.params; // remove await
 
   await connectDB();
 
@@ -14,7 +14,10 @@ export async function PUT(request, context) {
     );
 
     if (!updatedOrder) {
-      return new Response("Order not found", { status: 404 });
+      return new Response(JSON.stringify({ error: "Order not found" }), { 
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     return new Response(JSON.stringify(updatedOrder), {
@@ -23,6 +26,9 @@ export async function PUT(request, context) {
     });
   } catch (error) {
     console.error("Failed to update order:", error);
-    return new Response("Failed to update order", { status: 500 });
+    return new Response(JSON.stringify({ error: "Failed to update order" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
