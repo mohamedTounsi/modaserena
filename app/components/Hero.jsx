@@ -8,7 +8,7 @@ export default function Hero() {
   const router = useRouter();
 
   return (
-    <section className="relative h-[50vh] md:h-[80vh] w-full overflow-hidden">
+    <section className="relative h-[50vh] md:h-[80vh] w-full overflow-hidden mt-20">
       {/* Background Image */}
       <motion.div
         initial={{ scale: 1.1, opacity: 0 }}
