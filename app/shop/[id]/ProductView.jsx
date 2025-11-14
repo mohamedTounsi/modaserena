@@ -1,27 +1,46 @@
 "use client";
+
 import { useCart } from "@/context/CartContext";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
 import Image from "next/image";
-import {
-  Heart,
-  Share2,
-  ChevronRight,
-  ShoppingCart,
-  X,
-  Star,
-} from "lucide-react";
+import { ChevronRight, ShoppingCart, X, Star } from "lucide-react";
 
 const ProductView = ({ product }) => {
   const { addToCart } = useCart();
   const router = useRouter();
+  const effectivePrice =
+    product.priceAfterSolde && parseFloat(product.priceAfterSolde) > 0
+      ? product.priceAfterSolde
+      : product.price;
 
-  const [activeImage, setActiveImage] = useState("front");
-  const [wishlist, setWishlist] = useState(false);
-  const [showReviewModal, setShowReviewModal] = useState(false);
+  // --- IMAGES & COLORS LOGIC ---
+  const images = product.images || [];
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const activeImage =
+    images[activeImageIndex]?.imageUrl || images[activeImageIndex] || "";
 
-  // Sizes
+  const colors = Array.from(
+    new Map(
+      images.map((img) => [img.color || "#000", img.color || "#000"])
+    ).entries()
+  );
+  const [activeColor, setActiveColor] = useState(colors[0]?.[1] || "#000");
+
+  const handleColorClick = (hex) => {
+    setActiveColor(hex);
+    const idx = images.findIndex((img) => (img.color || "#000") === hex);
+    if (idx !== -1) setActiveImageIndex(idx);
+  };
+
+  const handleThumbnailClick = (idx) => {
+    setActiveImageIndex(idx);
+    const imgColor = images[idx].color || "#000";
+    setActiveColor(imgColor);
+  };
+
+  // --- SIZES ---
   const sizes = useMemo(
     () => [
       { label: "XS", quantity: +product.xsQuantity || 0 },
@@ -39,6 +58,7 @@ const ProductView = ({ product }) => {
     const firstAvailable = sizes.find((s) => s.quantity > 0);
     return firstAvailable ? firstAvailable.label : "";
   });
+
   const [quantity, setQuantity] = useState(1);
 
   const getAvailableStock = () => {
@@ -76,15 +96,18 @@ const ProductView = ({ product }) => {
   const handleBuyNow = () => {
     if (!selectedSize)
       return toast.error("Veuillez sélectionner une taille pour continuer.");
+
     const productToBuy = {
       _id: product._id,
       title: product.title,
-      image: product.frontImg,
-      price: product.price,
+      image: activeImage,
+      price: effectivePrice, // use discounted price
       size: selectedSize,
       quantity,
       category: product.category,
+      color: activeColor,
     };
+
     sessionStorage.setItem(
       "checkoutSingleProduct",
       JSON.stringify(productToBuy)
@@ -97,21 +120,25 @@ const ProductView = ({ product }) => {
       return toast.error(
         "Veuillez sélectionner une taille pour ajouter au panier."
       );
+
     addToCart({
       _id: product._id,
       title: product.title,
-      image: product.frontImg,
-      price: product.price,
+      image: activeImage,
+      price: effectivePrice, // use discounted price
       size: selectedSize,
       quantity,
       category: product.category,
+      color: activeColor,
     });
+
     toast.success("Ajouté au panier!");
   };
 
   const soldOut = sizes.every((s) => s.quantity === 0);
 
-  // Review form state
+  // --- Avis Client ---
+  const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewData, setReviewData] = useState({
     nom: "",
     prenom: "",
@@ -153,38 +180,40 @@ const ProductView = ({ product }) => {
   };
 
   return (
-    <div className="bg-white min-h-screen mt-18 md:mt-25">
+    <div className="bg-white min-h-screen mt-20 md:mt-25">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         <div className="flex flex-col md:flex-row gap-8 lg:gap-12">
           {/* IMAGES */}
           <div className="w-full md:w-1/2">
             <div className="sticky top-4">
               <div className="relative w-full aspect-square overflow-hidden mb-4 rounded-lg border border-gray-200">
-                <Image
-                  src={
-                    activeImage === "front" ? product.frontImg : product.backImg
-                  }
-                  alt={product.title || "Product"}
-                  fill
-                  className="object-contain transition-opacity duration-500"
-                />
+                {activeImage ? (
+                  <Image
+                    src={activeImage}
+                    alt={product.title || "Product"}
+                    fill
+                    className="object-contain transition-opacity duration-500"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center w-full h-full text-gray-400">
+                    Pas d'image
+                  </div>
+                )}
               </div>
-              <div className="flex gap-2">
-                {["front", "back"].map((imgType) => (
+              <div className="flex gap-2 flex-wrap">
+                {images.map((img, idx) => (
                   <button
-                    key={imgType}
-                    onClick={() => setActiveImage(imgType)}
+                    key={idx}
+                    onClick={() => handleThumbnailClick(idx)}
                     className={`w-20 h-20 border rounded-lg overflow-hidden transition-all duration-300 cursor-pointer ${
-                      activeImage === imgType
+                      activeImageIndex === idx
                         ? "border-pink-500 shadow-md"
                         : "border-gray-200 hover:border-pink-300"
                     }`}
                   >
                     <Image
-                      src={
-                        imgType === "front" ? product.frontImg : product.backImg
-                      }
-                      alt={imgType}
+                      src={img.imageUrl || img}
+                      alt={`thumb-${idx}`}
                       width={80}
                       height={80}
                       className="object-cover w-full h-full"
@@ -202,10 +231,44 @@ const ProductView = ({ product }) => {
               <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-1">
                 {product.title}
               </h1>
-              <p className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
-                {product.price}{" "}
-                <span className="text-sm font-medium text-gray-600">TND</span>
-              </p>
+              <div className="flex items-center gap-3 mb-1">
+                {product.priceAfterSolde &&
+                parseFloat(product.priceAfterSolde) > 0 ? (
+                  <>
+                    <p className="text-lg text-gray-500 line-through">
+                      {product.price} TND
+                    </p>
+                    <p className="text-2xl md:text-3xl font-bold text-gray-900">
+                      {product.priceAfterSolde}{" "}
+                      <span className="text-sm font-medium text-gray-600">
+                        TND
+                      </span>
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-2xl md:text-3xl font-bold text-gray-900">
+                    {product.price}{" "}
+                    <span className="text-sm font-medium text-gray-600">
+                      TND
+                    </span>
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* COLOR CIRCLES */}
+            <div className="flex gap-2 mt-2">
+              {colors.map(([hex], idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleColorClick(hex)}
+                  className={`w-6 h-6 rounded-full border-2 transition-all ${
+                    activeColor === hex ? "border-pink-500" : "border-gray-300"
+                  }`}
+                  style={{ backgroundColor: hex }}
+                  title={hex}
+                />
+              ))}
             </div>
 
             {/* Description */}
@@ -311,11 +374,10 @@ const ProductView = ({ product }) => {
         </div>
       </div>
 
-      {/* REVIEW MODAL */}
+      {/* REVIEW MODAL (your original design) */}
       {showReviewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-gray-200">
-            {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h2 className="text-xl font-bold text-gray-900">Votre Avis</h2>
               <button
@@ -325,10 +387,7 @@ const ProductView = ({ product }) => {
                 <X size={24} />
               </button>
             </div>
-
-            {/* Form */}
             <form onSubmit={handleSubmitReview} className="p-6 space-y-4">
-              {/* Name Row */}
               <div className="grid grid-cols-2 gap-3">
                 <input
                   type="text"
@@ -349,8 +408,6 @@ const ProductView = ({ product }) => {
                   className="p-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition text-sm"
                 />
               </div>
-
-              {/* Email & Phone */}
               <input
                 type="email"
                 name="email"
@@ -368,8 +425,6 @@ const ProductView = ({ product }) => {
                 onChange={handleReviewChange}
                 className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition text-sm"
               />
-
-              {/* Stars Rating */}
               <div className="py-2">
                 <label className="block text-sm font-semibold text-gray-900 mb-3">
                   Évaluation
@@ -396,8 +451,6 @@ const ProductView = ({ product }) => {
                   ))}
                 </div>
               </div>
-
-              {/* Comment */}
               <textarea
                 name="commentaire"
                 placeholder="Votre commentaire..."
@@ -407,8 +460,6 @@ const ProductView = ({ product }) => {
                 className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition text-sm resize-none"
                 rows={4}
               />
-
-              {/* Submit Button */}
               <button
                 type="submit"
                 className="w-full py-3 bg-black text-white font-bold rounded-lg mt-4 hover:bg-gray-900 transition-all duration-300 cursor-pointer text-sm"

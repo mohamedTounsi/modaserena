@@ -20,6 +20,7 @@ const categoryData = [
   { name: "Pantalon", slug: "pantalon", img: "/trousers.png" },
   { name: "Top", slug: "top", img: "/top.png" },
   { name: "Maillots de bain", slug: "maillots de bain", img: "/swimsuit.png" },
+  { name: "Pyjama", slug: "pyjama", img: "/pyjamapic.png" },
 ];
 
 const ShopCategoriesPage = () => {

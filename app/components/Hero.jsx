@@ -8,14 +8,14 @@ export default function Hero() {
   const router = useRouter();
 
   return (
-    <section className="relative h-[50vh] md:h-[80vh] w-full overflow-hidden mt-20">
+    <section className="relative h-[50vh] md:h-[90vh] w-full overflow-hidden mt-20">
       {/* Background Image */}
       <motion.div
         initial={{ scale: 1.1, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 1.5, ease: "easeOut" }}
-        className="absolute inset-0 bg-cover bg-left md:bg-center bg-no-repeat"
-        style={{ backgroundImage: `url('/hero.png')` }}
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url('/heroserena4.jpeg')` }}
       />
 
       {/* Dark Overlay */}
@@ -25,7 +25,7 @@ export default function Hero() {
       <div className="relative z-10 flex items-center justify-center h-full w-full px-6">
         {/* Button */}
         <motion.button
-          onClick={() => router.push("/shop")}
+          onClick={() => router.push("/shopcategories")}
           whileHover={{
             scale: 1.05,
             boxShadow: "0 0 15px rgba(255,255,255,0.4)",

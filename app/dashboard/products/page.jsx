@@ -40,7 +40,6 @@ const Page = () => {
           prevProducts.filter((product) => product._id !== id)
         );
         setShowConfirm(false);
-        console.log("Product deleted successfully");
       } else {
         console.error("Failed to delete product");
       }
@@ -83,48 +82,101 @@ const Page = () => {
 
         {/* Product Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8 pb-12">
-          {products.map((product) => (
-            <div
-              key={product._id}
-              className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-pink-100 group"
-            >
-              {/* Image Container */}
-              <div className="relative h-96 overflow-hidden bg-gray-50">
-                <Image
-                  src={product.frontImg}
-                  alt={product.title}
-                  width={500}
-                  height={500}
-                  className="w-full h-full object-contain p-4"
-                />
-              </div>
+          {products.map((product) => {
+            // Safe check for cover image
+            const coverImage =
+              product.images?.[0]?.imageUrl &&
+              typeof product.images[0].imageUrl === "string"
+                ? product.images[0].imageUrl
+                : null;
 
-              {/* Product Info */}
-              <div className="p-6">
-                <h2 className="text-xl font-semibold text-gray-900 text-center line-clamp-2 hover:text-pink-500 transition-colors mb-4">
-                  {product.title}
-                </h2>
-                <div className="flex gap-3 justify-center">
-                  <button
-                    onClick={() =>
-                      router.push(`/dashboard/products/edit/${product._id}`)
-                    }
-                    className="text-black cursor-pointer border-2 border-black hover:text-white hover:bg-zinc-800 p-2 rounded-lg transition-all duration-300 flex items-center gap-2 flex-1 justify-center "
-                  >
-                    <Edit size={20} />
-                    <span>Edit</span>
-                  </button>
-                  <button
-                    onClick={() => handleConfirmDelete(product)}
-                    className="bg-red-500 hover:bg-white cursor-pointer text-white hover:text-red-500 hover:border hover:border-red-500 p-2 rounded-lg transition-all duration-300 shadow-md flex items-center gap-2 flex-1 justify-center"
-                  >
-                    <Trash2 size={20} />
-                    <span>Delete</span>
-                  </button>
+            return (
+              <div
+                key={product._id}
+                className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-pink-100 group"
+              >
+                {/* Cover Image */}
+                <div className="relative h-96 overflow-hidden bg-gray-50">
+                  {coverImage ? (
+                    <Image
+                      src={
+                        coverImage.startsWith("http")
+                          ? coverImage
+                          : `/${coverImage}`
+                      }
+                      alt={product.title}
+                      width={500}
+                      height={500}
+                      className="w-full h-full object-contain p-4"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      No Image
+                    </div>
+                  )}
+                </div>
+
+                {/* Product Info */}
+                <div className="p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 text-center line-clamp-2 hover:text-pink-500 transition-colors mb-2">
+                    {product.title}
+                  </h2>
+
+                  {/* Price */}
+                  <div className="text-center mb-2">
+                    {product.priceAfterSolde ? (
+                      <div className="flex justify-center gap-2 items-center">
+                        <span className="line-through text-gray-400">
+                          {product.price} TND
+                        </span>
+                        <span className="font-bold text-pink-500">
+                          {product.priceAfterSolde} TND
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="font-bold">{product.price} TND</span>
+                    )}
+                  </div>
+
+                  {/* Category */}
+                  <p className="text-center text-gray-500 mb-4">
+                    {product.category}
+                  </p>
+
+                  {/* Color Thumbnails */}
+                  <div className="flex justify-center gap-2 mb-4">
+                    {product.images?.map((img, idx) => (
+                      <span
+                        key={idx}
+                        className="w-6 h-6 rounded-full border border-gray-300"
+                        style={{ backgroundColor: img.color || "#000000" }}
+                        title={img.color || "#000000"}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="flex gap-3 justify-center">
+                    <button
+                      onClick={() =>
+                        router.push(`/dashboard/products/edit/${product._id}`)
+                      }
+                      className="text-black cursor-pointer border-2 border-black hover:text-white hover:bg-zinc-800 p-2 rounded-lg transition-all duration-300 flex items-center gap-2 flex-1 justify-center"
+                    >
+                      <Edit size={20} />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      onClick={() => handleConfirmDelete(product)}
+                      className="bg-red-500 hover:bg-white cursor-pointer text-white hover:text-red-500 hover:border hover:border-red-500 p-2 rounded-lg transition-all duration-300 shadow-md flex items-center gap-2 flex-1 justify-center"
+                    >
+                      <Trash2 size={20} />
+                      <span>Delete</span>
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Empty State */}

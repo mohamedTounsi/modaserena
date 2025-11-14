@@ -45,6 +45,7 @@ export async function POST(req) {
       });
     });
 
+    // Required fields check
     const requiredFields = ["title", "price", "category"];
     for (const field of requiredFields) {
       if (!fields[field]) {
@@ -55,14 +56,27 @@ export async function POST(req) {
       }
     }
 
-    if (!files.frontImg || !files.backImg) {
+    // Images check
+    const uploadedImages = files.images;
+    if (!uploadedImages || uploadedImages.length === 0) {
       return NextResponse.json(
-        { message: "Both front and back images are required" },
+        { message: "At least 1 product image is required" },
         { status: 400 }
       );
     }
 
-    // Upload helper
+    // Colors check
+    const colors = fields.colors || [];
+    const colorsArray = Array.isArray(colors) ? colors : [colors];
+
+    if (colorsArray.length !== uploadedImages.length) {
+      return NextResponse.json(
+        { message: "Each image must have a matching color" },
+        { status: 400 }
+      );
+    }
+
+    // Upload to Cloudinary
     const uploadToCloudinary = async (file) => {
       const result = await cloudinary.v2.uploader.upload(file.filepath, {
         folder: "productImages",
@@ -73,8 +87,17 @@ export async function POST(req) {
       return result.secure_url;
     };
 
-    const frontImgUrl = await uploadToCloudinary(files.frontImg[0]);
-    const backImgUrl = await uploadToCloudinary(files.backImg[0]);
+    const imageUrls = [];
+    for (const img of uploadedImages) {
+      const url = await uploadToCloudinary(img);
+      imageUrls.push(url);
+    }
+
+    // Combine URLs and colors into array of objects
+    const images = imageUrls.map((url, index) => ({
+      imageUrl: url,
+      color: colorsArray[index] || "#000000",
+    }));
 
     const category = Array.isArray(fields.category)
       ? fields.category[0]
@@ -83,12 +106,14 @@ export async function POST(req) {
     const productData = {
       title: Array.isArray(fields.title) ? fields.title[0] : fields.title,
       price: Number(Array.isArray(fields.price) ? fields.price[0] : fields.price),
+      priceAfterSolde: Number(fields.priceAfterSolde?.[0] || 0),
       category,
       description: Array.isArray(fields.description)
         ? fields.description[0]
         : fields.description || "",
-      frontImg: frontImgUrl,
-      backImg: backImgUrl,
+      images, // images with colors
+
+      // Stock
       xsQuantity: Number(fields.xsQuantity?.[0] || 0),
       sQuantity: Number(fields.sQuantity?.[0] || 0),
       mQuantity: Number(fields.mQuantity?.[0] || 0),
@@ -139,36 +164,29 @@ export async function PATCH(req) {
       return NextResponse.json({ message: "Invalid products array" }, { status: 400 });
     }
 
-    const bulkOps = products.map((item) => {
-      const normalizedSize = item.size?.toLowerCase();
-      const validSizes = ["xs", "s", "m", "l", "xl", "xxl", "xxxl"];
+    const bulkOps = products
+      .map((item) => {
+        const normalizedSize = item.size?.toLowerCase();
+        const validSizes = ["xs", "s", "m", "l", "xl", "xxl", "xxxl"];
 
-      if (!validSizes.includes(normalizedSize)) {
-        console.warn(`⚠️ Invalid size '${item.size}' for product ${item._id}`);
-        return null;
-      }
+        if (!validSizes.includes(normalizedSize)) return null;
 
-      const sizeField = `${normalizedSize}Quantity`;
-      const quantityToDecrement = Number(item.quantity);
+        const sizeField = `${normalizedSize}Quantity`;
+        const quantityToDecrement = Number(item.quantity);
 
-      if (quantityToDecrement <= 0) {
-        console.warn(`⚠️ Skipping product ${item._id}, invalid quantity: ${item.quantity}`);
-        return null;
-      }
+        if (quantityToDecrement <= 0) return null;
 
-      return {
-        updateOne: {
-          filter: { _id: item._id, [sizeField]: { $gte: quantityToDecrement } },
-          update: { $inc: { [sizeField]: -quantityToDecrement } },
-        },
-      };
-    }).filter(Boolean);
+        return {
+          updateOne: {
+            filter: { _id: item._id, [sizeField]: { $gte: quantityToDecrement } },
+            update: { $inc: { [sizeField]: -quantityToDecrement } },
+          },
+        };
+      })
+      .filter(Boolean);
 
     if (bulkOps.length > 0) {
-      const result = await Product.bulkWrite(bulkOps);
-      console.log("✅ Stock updated:", result);
-    } else {
-      console.warn("⚠️ No valid products to update stock");
+      await Product.bulkWrite(bulkOps);
     }
 
     return NextResponse.json({ message: "Stock updated successfully ✅" }, { status: 200 });

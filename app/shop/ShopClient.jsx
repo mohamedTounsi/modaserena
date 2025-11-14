@@ -7,7 +7,6 @@ import { ShoppingCart } from "lucide-react";
 import CustomDropdown from "../components/CustomDropdown";
 
 const ShopClient = ({ products }) => {
-  const [hoveredCard, setHoveredCard] = useState(null);
   const [sortOption, setSortOption] = useState("name-asc");
   const [sortedProducts, setSortedProducts] = useState([]);
 
@@ -86,8 +85,7 @@ const ShopClient = ({ products }) => {
 
       {/* Products grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mb-15">
-        {sortedProducts.map((product, idx) => {
-          // Check if sold out (all sizes 0)
+        {sortedProducts.map((product) => {
           const sizes = [
             "xsQuantity",
             "sQuantity",
@@ -98,39 +96,48 @@ const ShopClient = ({ products }) => {
             "xxxlQuantity",
           ];
           const soldOut = sizes.every((size) => +product[size] === 0);
-          console.log(
-            `Product: ${product.title}, soldOut: ${soldOut}`,
-            product
-          );
+
+          const hasSolde =
+            product.priceAfterSolde && parseFloat(product.priceAfterSolde) > 0;
 
           return (
             <Link key={product._id} href={`/shop/${product._id}`}>
-              <div
-                onMouseEnter={() => setHoveredCard(idx)}
-                onMouseLeave={() => setHoveredCard(null)}
-                className="group h-full relative rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 flex flex-col bg-white border border-black/5 cursor-pointer"
-              >
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/2 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-20" />
-
+              <div className="group h-full relative rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 flex flex-col bg-white border border-black/5 cursor-pointer">
+                {/* Product Image */}
                 <div className="relative h-120 w-full aspect-square overflow-hidden bg-pink-50/30">
-                  <Image
-                    src={product.frontImg}
-                    alt={product.title}
-                    fill
-                    className={`object-cover transition-transform duration-700 ${
-                      hoveredCard === idx ? "scale-105" : ""
-                    }`}
-                  />
-                  <Image
-                    src={product.backImg}
-                    alt={`${product.title} back`}
-                    fill
-                    className="object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-700 z-10"
-                  />
+                  {product.images && product.images.length > 0 ? (
+                    <>
+                      {/* MAIN IMAGE: first one */}
+                      <Image
+                        src={
+                          typeof product.images[0] === "string"
+                            ? product.images[0]
+                            : product.images[0]?.imageUrl || "/placeholder.png"
+                        }
+                        alt={product.title}
+                        fill
+                        className="object-cover transition-transform duration-700"
+                      />
+
+                      {/* Color circles for all images */}
+                      <div className="absolute top-3 right-3 flex gap-1 z-20">
+                        {product.images.map((img, idx) => (
+                          <span
+                            key={idx}
+                            className="w-4 h-4 rounded-full border border-white shadow-md"
+                            style={{ backgroundColor: img.color || "#000" }}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-center h-full w-full bg-gray-200 text-gray-500">
+                      No Image
+                    </div>
+                  )}
 
                   {soldOut && (
-                    <div className="absolute top-3 right-3 z-20">
+                    <div className="absolute top-3 left-3 z-20">
                       <p className="bg-black/80 text-white px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">
                         Rupture de Stock
                       </p>
@@ -143,9 +150,14 @@ const ShopClient = ({ products }) => {
                   <h2 className="text-sm md:text-base font-bold text-black line-clamp-2 group-hover:text-pink-600 transition-colors mb-3">
                     {product.title}
                   </h2>
-                  <div className="mb-6">
+                  <div className="mb-6 flex gap-2 items-center">
+                    {hasSolde && (
+                      <p className="text-sm text-gray-500 line-through">
+                        {product.price} TND
+                      </p>
+                    )}
                     <p className="text-2xl font-bold text-black">
-                      {product.price}{" "}
+                      {hasSolde ? product.priceAfterSolde : product.price}{" "}
                       <span className="text-sm font-semibold text-black/60">
                         TND
                       </span>

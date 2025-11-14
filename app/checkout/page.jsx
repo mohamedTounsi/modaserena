@@ -40,7 +40,7 @@ const CheckoutPage = () => {
         (acc, item) => acc + parseFloat(item.price) * item.quantity,
         0
       );
-      setTotal((subtotal + 8).toFixed(2)); // 8 TND shipping
+      setTotal(subtotal.toFixed(2)); // 8 TND shipping
     }
   }, [items]);
 
@@ -59,7 +59,6 @@ const CheckoutPage = () => {
       city,
       postalCode,
       notes,
-      shippingMethod: "Delivery",
       paymentMethod: "Cash on Delivery",
       total: parseFloat(total),
       products: items.map((item) => ({
@@ -186,23 +185,6 @@ const CheckoutPage = () => {
                 onChange={(e) => setNotes(e.target.value)}
               />
 
-              {/* Shipping & Payment */}
-              <div className="pt-6 border-t border-gray-200">
-                <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase">
-                  Shipping Method
-                </h3>
-                <label className="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="shipping"
-                    defaultChecked
-                    className="w-4 h-4 cursor-pointer"
-                  />
-                  <span className="text-sm text-gray-700">
-                    Delivery (8 TND)
-                  </span>
-                </label>
-              </div>
               <div className="pt-6 border-t border-gray-200">
                 <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase">
                   Payment Method
@@ -274,10 +256,7 @@ const CheckoutPage = () => {
                   TND
                 </span>
               </div>
-              <div className="flex justify-between text-gray-700">
-                <span>Shipping</span>
-                <span>8.00 TND</span>
-              </div>
+
               <div className="flex justify-between font-bold text-base pt-3 border-t border-gray-200 text-gray-900">
                 <span>Total</span>
                 <span>{total} TND</span>

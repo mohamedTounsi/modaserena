@@ -10,8 +10,9 @@
   },
   "dependencies": {
     "@shadcn/ui": "^0.0.4",
-    "cloudinary": "^2.6.0",
-    "formidable": "^3.5.2",
+    "axios": "^1.13.2",
+    "cloudinary": "^2.8.0",
+    "formidable": "^3.5.4",
     "framer-motion": "^12.6.3",
     "fs-extra": "^11.3.0",
     "icons": "^1.0.0",

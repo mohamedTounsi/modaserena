@@ -1,10 +1,13 @@
-// models/product.js
 import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     price: { type: Number, required: true },
+
+    // New optional price after discount
+    priceAfterSolde: { type: Number, default: null },
+
     category: {
       type: String,
       enum: [
@@ -16,14 +19,21 @@ const productSchema = new mongoose.Schema(
         "pantalon",
         "top",
         "maillots de bain",
+        "pyjama",
       ],
       required: true,
     },
-    frontImg: String,
-    backImg: String,
+
+    // NEW: Array of images with color
+    images: [
+      {
+        imageUrl: { type: String, required: true },
+        color: { type: String, required: true }, // Hex color
+      },
+    ],
+
     description: String,
 
-    // Sizes (XS → XXXL) — numeric types
     xsQuantity: { type: Number, default: 0 },
     sQuantity: { type: Number, default: 0 },
     mQuantity: { type: Number, default: 0 },
@@ -35,5 +45,6 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Product = mongoose.models.Product || mongoose.model("Product", productSchema);
+const Product =
+  mongoose.models.Product || mongoose.model("Product", productSchema);
 export default Product;
