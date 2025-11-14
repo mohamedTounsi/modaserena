@@ -1,16 +1,19 @@
 "use client";
 
-import { Menu, Search, ShoppingCart, X } from "lucide-react";
+import { motion } from "framer-motion";
+import { Store, Menu, Search, ShoppingCart, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import { useCart } from "@/context/CartContext";
 
-const Header = () => {
+const HeaderWithHero = () => {
+  const router = useRouter();
   const { cart } = useCart();
   const totalQuantity = cart.reduce((acc, item) => acc + item.quantity, 0);
   const pathname = usePathname();
+
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -28,15 +31,12 @@ const Header = () => {
         console.error("Failed to fetch products:", error);
       }
     };
-
     fetchProducts();
   }, []);
 
-  // Detect scroll - reversed behavior
+  // Detect scroll
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -55,6 +55,7 @@ const Header = () => {
 
   return (
     <>
+      {/* Header */}
       <header
         className={`fixed top-0 left-0 w-full z-50 bg-white shadow-md transition-all duration-300 ${
           isScrolled ? "py-2 md:py-3" : "py-4 md:py-5"
@@ -127,6 +128,37 @@ const Header = () => {
           </div>
         </div>
       </header>
+
+      {/* Hero Section */}
+      <section className="relative min-h-screen w-full overflow-hidden">
+        {/* Background Image */}
+        <motion.div
+          initial={{ scale: 1.1, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 1.5, ease: "easeOut" }}
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url('/heroserena4.jpeg')` }}
+        />
+
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px]" />
+
+        {/* Content */}
+        <div className="relative z-10 flex items-center justify-center h-screen w-full px-6">
+          <motion.button
+            onClick={() => router.push("/shopcategories")}
+            whileHover={{
+              scale: 1.05,
+              boxShadow: "0 0 15px rgba(255,255,255,0.4)",
+            }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 200 }}
+            className="flex items-center gap-2 px-6 py-3 md:px-8 md:py-4 border border-white text-white rounded-sm cursor-pointer font-semibold text-lg tracking-wide hover:bg-white hover:text-black transition-all duration-300"
+          >
+            <Store size={24} /> Shop Now
+          </motion.button>
+        </div>
+      </section>
 
       {/* Search Dropdown */}
       <div
@@ -261,4 +293,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default HeaderWithHero;
